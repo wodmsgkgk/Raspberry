@@ -1,6 +1,7 @@
 package chatting_client;
 
 import java.awt.EventQueue;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -18,16 +19,110 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
 
 public class Chatting_client extends JFrame {
-	
+
 	private JPanel contentPane;
 	private JTextField textField_port;
 	private JTextField textField_msg;
 	private JTextArea textArea = new JTextArea();
 	private JTextField textField_ip;
-	
+	private JTextField textField_id;
+	private boolean send=false;
+
 	/**
 	 * Launch the application.
 	 */
+	public void server_client() throws InterruptedException {
+
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+		Socket sock = null;
+
+		// í˜¸ìŠ¤íŠ¸ëª…, í¬íŠ¸ë²ˆí˜¸ ì…ë ¥ ë°›ê¸° ìœ„í•œ ê°ì²´
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+		// ì„œë²„ë¡œ ë¶€í„° ì½ì–´ì˜¤ê¸° ìœ„í•œ ì…ë ¥ ìŠ¤íŠ¸ë¦¼ ê°ì²´
+		BufferedReader readFromServer = null;
+
+		// ì„œë²„ë¡œ ì „ë‹¬í•  ì¶œë ¥ ìŠ¤íŠ¸ë¦¼ ê°ì²´
+		PrintWriter pw = null;
+
+		boolean endflag = false;
+
+		try {
+			String host = textField_ip.getText();
+			int port = Integer.parseInt(textField_port.getText());
+
+			// ì†Œì¼“ ê°ì²´ ìƒì„±(socket open)
+			sock = new Socket(host, port);
+			
+			// ìŠ¤íŠ¸ë¦¼ ê°ì²´ ìƒì„±
+			pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream(), "UTF-8"));
+			readFromServer = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
+
+			// ì‚¬ìš©ì id ì…ë ¥
+			String id = textField_id.getText();
+			
+			// ì…ë ¥ëœ ì‚¬ìš©ì idë¥¼ ì„œë²„ë¡œ ì „ë‹¬
+			pw.println(id);
+			pw.flush();
+			textArea.append("ì ‘ì† ì™„ë£Œ.. id : "+id+"\n");
+
+			// ìì‹ìŠ¤ë ˆë“œ ì‹œì‘
+			// ìì‹ìŠ¤ë ˆë“œëŠ” ì„œë²„ê°€ ì „ë‹¬í•˜ëŠ” ë¬¸ìì—´ì„ ì½ì–´ì™€ í™”ë©´(í‘œì¤€ ì¶œë ¥)ì—
+			// ì¶œë ¥ì‹œí‚¤ëŠ” ì—­í• ì„ í•œë‹¤.
+			ReadFromServerThread thread = new ReadFromServerThread(sock, readFromServer);
+			thread.start();
+
+			// ë©”ì¸ìŠ¤ë ˆë“œ
+					// ë©”ì¸ìŠ¤ë ˆë“œëŠ” ì „ë‹¬í•  ë©”ì‹œì§€ë¥¼ í‚¤ë³´ë“œ(í‘œì¤€ì…ë ¥)ë¡œ ì…ë ¥ë°›ì•„ ì„œë²„ë¡œ ì¶œë ¥
+					// ì‹œí‚¤ëŠ” ì—­í• 
+					String line = null;
+					while (true) {
+						line = textField_msg.getText();
+						if (send) {
+							textArea.append(id + " : " + line + "\n");
+							pw.println(line);
+							pw.flush();
+							textField_msg.setText("");
+							send = false;
+							if (line.equals("/quit")) {
+								endflag = true;
+								break;
+							}
+						}
+					}
+					textArea.append("í´ë¼ì´ì–¸íŠ¸ ì ‘ì†ì„ ì¢…ë£Œí•©ë‹ˆë‹¤.\n");
+
+		} catch (Exception e) {
+			if (!endflag) {
+				e.printStackTrace();
+				textArea.append("ì ‘ì†ì‹¤íŒ¨...\n");
+			}
+		} finally {
+			try {
+				if (pw != null)
+					pw.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			try {
+				if (readFromServer != null)
+					readFromServer.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			try {
+				if (sock != null)
+					sock.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+			}
+		});
+		t1.start();
+	}
+
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -39,83 +134,6 @@ public class Chatting_client extends JFrame {
 				}
 			}
 		});
-	    Socket sock = null;
-	    
-	    //È£½ºÆ®¸í, Æ÷Æ®¹øÈ£ ÀÔ·Â ¹Ş±â À§ÇÑ °´Ã¼
-	    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		    
-	    //¼­¹ö·Î ºÎÅÍ ÀĞ¾î¿À±â À§ÇÑ ÀÔ·Â ½ºÆ®¸² °´Ã¼
-	    BufferedReader readFromServer = null;
-		    
-	    //¼­¹ö·Î Àü´ŞÇÒ Ãâ·Â ½ºÆ®¸² °´Ã¼
-	    PrintWriter pw = null;
-	    
-	    boolean endflag = false;
-		    
-	    try{
-	        // host, port ÀÔ·Â
-	    	System.out.println("È£½ºÆ®¸í ÀÔ·Â : ");    	   
-	        String host = br.readLine();
-	        System.out.println("Æ÷Æ®¹øÈ£ ÀÔ·Â : ");
-	        int port = Integer.parseInt(br.readLine());
-
-	        // ¼ÒÄÏ °´Ã¼ »ı¼º(socket open)
-	        sock = new Socket(host,port);
-	    	System.out.println("Á¢¼Ó ¿Ï·á.. socket opened....");  
-	    	
-	    	//½ºÆ®¸² °´Ã¼ »ı¼º
-	    	pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream(),"UTF-8"));
-	    	readFromServer = new BufferedReader(new InputStreamReader(sock.getInputStream(),"UTF-8"));
-	    	
-	    	//»ç¿ëÀÚ id ÀÔ·Â
-	    	System.out.println("»ç¿ëÇÒ id ÀÔ·Â : ");
-	    	String id = br.readLine();
-	    	
-	    	//ÀÔ·ÂµÈ »ç¿ëÀÚ id¸¦ ¼­¹ö·Î Àü´Ş
-	    	pw.println(id);
-	    	pw.flush();
-	    	
-	    	//ÀÚ½Ä½º·¹µå ½ÃÀÛ
-	    	//ÀÚ½Ä½º·¹µå´Â ¼­¹ö°¡ Àü´ŞÇÏ´Â ¹®ÀÚ¿­À» ÀĞ¾î¿Í È­¸é(Ç¥ÁØ Ãâ·Â)¿¡ 
-//Ãâ·Â½ÃÅ°´Â ¿ªÇÒÀ» ÇÑ´Ù.
-	    	ReadFromServerThread thread = new ReadFromServerThread(sock, readFromServer);
-	    	thread.start();
-	    	
-	    	//¸ŞÀÎ½º·¹µå
-	    	//¸ŞÀÎ½º·¹µå´Â Àü´ŞÇÒ ¸Ş½ÃÁö¸¦ Å°º¸µå(Ç¥ÁØÀÔ·Â)·Î ÀÔ·Â¹Ş¾Æ ¼­¹ö·Î Ãâ·Â
-//½ÃÅ°´Â ¿ªÇÒ
-	    	String line = null;
-	    	while((line = br.readLine()) != null){
-	    		pw.println(line);
-	    		pw.flush();
-	    		if(line.equals("/quit")){
-	    			endflag = true;
-	    			break;
-	    		}
-	    	}
-	    	System.out.println("Å¬¶óÀÌ¾ğÆ® Á¢¼ÓÀ» Á¾·áÇÕ´Ï´Ù.");
-
-	    }catch(Exception e){
-	    	if(!endflag) { 		
-	    		e.printStackTrace();
-	    	}
-	    }finally{
-	    	try {
-		    if(pw != null) pw.close();
-		}catch (Exception e) {				
-		    e.printStackTrace();
-		}
-		try{
-		    if(readFromServer != null) readFromServer.close(); 
-		}catch(Exception e){				
-		    e.printStackTrace();
-		}
-                try{
-                    if(sock != null) sock.close();
-                }catch(Exception e){          	
-                    e.printStackTrace();    	 
-                }
-	    }
 	}
 
 	/**
@@ -123,7 +141,7 @@ public class Chatting_client extends JFrame {
 	 */
 	public Chatting_client() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, 450, 379);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -132,9 +150,14 @@ public class Chatting_client extends JFrame {
 		JButton btnClient = new JButton("\uC811\uC18D");
 		btnClient.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				try {
+					server_client();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		});
-		btnClient.setBounds(12, 10, 97, 52);
+		btnClient.setBounds(12, 25, 97, 52);
 		contentPane.add(btnClient);
 
 		textField_port = new JTextField();
@@ -148,50 +171,57 @@ public class Chatting_client extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
-		btnExit.setBounds(333, 10, 97, 52);
+		btnExit.setBounds(325, 25, 97, 52);
 		contentPane.add(btnExit);
-
-		textArea.setBounds(12, 72, 410, 148);
+		textArea.setBounds(12, 103, 410, 190);
 		contentPane.add(textArea);
 
 		textField_msg = new JTextField();
-		textField_msg.setBounds(12, 230, 309, 21);
+		textField_msg.setBounds(12, 308, 309, 21);
 		contentPane.add(textField_msg);
 		textField_msg.setColumns(10);
 
 		JButton btnSend = new JButton("\uC804\uC1A1");
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String text = textField_msg.getText();
-				
+				send = true;
 			}
 		});
-		btnSend.setBounds(333, 229, 97, 23);
+		btnSend.setBounds(333, 307, 97, 23);
 		contentPane.add(btnSend);
-		
+
 		textField_ip = new JTextField();
 		textField_ip.setText("192.168.162.105");
 		textField_ip.setBounds(160, 10, 161, 21);
 		contentPane.add(textField_ip);
 		textField_ip.setColumns(10);
-		
+
 		JLabel lblNewLabel = new JLabel("IP");
 		lblNewLabel.setBounds(121, 14, 29, 15);
 		contentPane.add(lblNewLabel);
-		
+
 		JLabel lblNewLabel_1 = new JLabel("PORT");
 		lblNewLabel_1.setBounds(121, 42, 40, 15);
 		contentPane.add(lblNewLabel_1);
+		
+		textField_id = new JTextField();
+		textField_id.setBounds(160, 72, 161, 21);
+		contentPane.add(textField_id);
+		textField_id.setColumns(10);
+		
+		JLabel lblId = new JLabel("ID");
+		lblId.setBounds(121, 75, 57, 15);
+		contentPane.add(lblId);
 	}
 }
 
-// ÀÚ½Ä ½º·¹µå Å¬·¡½º
-// ¼­¹ö°¡ Àü´ŞÇÏ´Â ¹®ÀÚ¿­À» ÀĞ¾î¿Í È­¸é(Ç¥ÁØ Ãâ·Â)¿¡ Ãâ·Â½ÃÅ°´Â ¿ªÇÒÀ» ÇÑ´Ù.
+// ìì‹ ìŠ¤ë ˆë“œ í´ë˜ìŠ¤
+// ì„œë²„ê°€ ì „ë‹¬í•˜ëŠ” ë¬¸ìì—´ì„ ì½ì–´ì™€ í™”ë©´(í‘œì¤€ ì¶œë ¥)ì— ì¶œë ¥ì‹œí‚¤ëŠ” ì—­í• ì„ í•œë‹¤.
 class ReadFromServerThread extends Thread {
 	private Socket sock = null;
 	private BufferedReader readFromServer = null;
 
-	// »ı¼ºÀÚ
+	// ìƒì„±ì
 	public ReadFromServerThread(Socket sock, BufferedReader readFromServer) {
 		this.sock = sock;
 		this.readFromServer = readFromServer;
@@ -204,7 +234,7 @@ class ReadFromServerThread extends Thread {
 				System.out.println(line);
 			}
 		} catch (Exception e) {
-			System.out.println("¼ÒÄÏ Á¾·á µÇ¾ú½À´Ï´Ù.");
+			System.out.println("ì†Œì¼“ ì¢…ë£Œ ë˜ì—ˆìŠµë‹ˆë‹¤.");
 		} finally {
 			try {
 				if (readFromServer != null)
