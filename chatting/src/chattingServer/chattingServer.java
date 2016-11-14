@@ -17,6 +17,7 @@ import java.util.Iterator;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
@@ -26,8 +27,10 @@ public class chattingServer extends JFrame {
 	private JTextField textField_port;
 	private JTextArea textArea = new JTextArea();
 	private ServerSocket s_sock;
-	private boolean socketflag = true;
-	
+	private boolean socketflag = false;
+	private boolean sunthread = false;
+	private ChatThread chat_thread;
+	private Thread t1;
 	/**
 	 * Launch the application.
 	 */
@@ -43,37 +46,40 @@ public class chattingServer extends JFrame {
 			}
 		});
 	}
-	
-	public void server_set() throws InterruptedException {
-		Thread t1 = new Thread(new Runnable() {
-			public void run() {
+
+	public void server_set() throws InterruptedException{
+		t1 = new Thread(new Runnable() {
+			public void run()  {
 				int port = Integer.parseInt(textField_port.getText());
-				// --- ¸ŞÀÎ ½º·¹µå
+				// --- ë©”ì¸ ìŠ¤ë ˆë“œ
 				try {
-					// 1) ¼­¹ö¼ÒÄÏ »ı¼º ÈÄ Å¬¶óÀÌ¾ğÆ® Á¢¼Ó ¿äÃ» Listening
+					// 1) ì„œë²„ì†Œì¼“ ìƒì„± í›„ í´ë¼ì´ì–¸íŠ¸ ì ‘ì† ìš”ì²­ Listening
 					s_sock = new ServerSocket(port);
-					textArea.append(port + " ¼­¹ö Listening....\n");
+					textArea.append(port + " ì„œë²„ Listening....\n");
+					textArea.setCaretPosition(textArea.getDocument().getLength());
 
-					// 2) ½º·¹µå°£ °øÀ¯ÇÏ°Ô µÉ HashMap °´Ã¼ »ı¼º
+					// 2) ìŠ¤ë ˆë“œê°„ ê³µìœ í•˜ê²Œ ë  HashMap ê°ì²´ ìƒì„±
 					HashMap hm = new HashMap();
-					
+
 					while (socketflag) {
-						// Å¬¶óÀÌ¾ğÆ®ÀÇ Á¢¼ÓÀ» ±â´Ù¸²
+						// í´ë¼ì´ì–¸íŠ¸ì˜ ì ‘ì†ì„ ê¸°ë‹¤ë¦¼
 						Socket c_sock = s_sock.accept();
-
-						// 3) Å¬¶óÀÌ¾ğÆ®ÀÇ Á¢¼Ó ¿äÃ»ÀÌ ÀÖÀ» °æ¿ì ÇØ´ç ¿äÃ»¿¡ ´ëÇÑ Ã³¸®¸¦ À§ÇÑ
-						// ÀÚ½Ä ½º·¹µå »ı¼º ? ChatThread ½ÇÇà
-						// ÀÌ¶§, Å¬¶óÀÌ¾ğÆ®¿ÍÀÇ Åë½ÅÀ» À§ÇÑ ¼ÒÄÏ°´Ã¼¿Í HashMap °´Ã¼¸¦
-						// ½º·¹µå¿¡ Àü´Ş
-						ChatThread chat_thread = new ChatThread(c_sock, hm);
-
-						// 4) ÀÚ½Ä ½º·¹µå °´Ã¼ start
+						sunthread = true;
+						// 3) í´ë¼ì´ì–¸íŠ¸ì˜ ì ‘ì† ìš”ì²­ì´ ìˆì„ ê²½ìš° í•´ë‹¹ ìš”ì²­ì— ëŒ€í•œ ì²˜ë¦¬ë¥¼ ìœ„í•œ
+						// ìì‹ ìŠ¤ë ˆë“œ ìƒì„± ? ChatThread ì‹¤í–‰
+						// ì´ë•Œ, í´ë¼ì´ì–¸íŠ¸ì™€ì˜ í†µì‹ ì„ ìœ„í•œ ì†Œì¼“ê°ì²´ì™€ HashMap ê°ì²´ë¥¼
+						// ìŠ¤ë ˆë“œì— ì „ë‹¬
+						chat_thread = new ChatThread(c_sock, hm);
+						// 4) ìì‹ ìŠ¤ë ˆë“œ ê°ì²´ start
 						chat_thread.start();
 					}
 				} catch (Exception e) {
-					textArea.append(port + "¼­¹ö Á¾·á....\n");
+					textArea.append(port + " ì„œë²„ ì¢…ë£Œ....\n");
+					textArea.setCaretPosition(textArea.getDocument().getLength()); // ë§¨ì•„ë˜ë¡œ						
 					socketflag = false;
+					sunthread = false;
 				}
+
 			}
 		});
 		t1.start();
@@ -90,7 +96,7 @@ public class chattingServer extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
-		JButton btnServer = new JButton("\uC11C\uBC84");
+		JButton btnServer = new JButton("\uC11C\uBC84 \uC5F4\uAE30");
 		btnServer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -106,28 +112,16 @@ public class chattingServer extends JFrame {
 
 		textField_port = new JTextField();
 		textField_port.setText("7000");
-		textField_port.setBounds(121, 11, 200, 21);
+		textField_port.setBounds(121, 11, 301, 21);
 		contentPane.add(textField_port);
 		textField_port.setColumns(10);
 
-		JButton btnExit = new JButton("\uC885\uB8CC");
-		btnExit.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					s_sock.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
-		btnExit.setBounds(333, 10, 97, 23);
-		contentPane.add(btnExit);
-
-		textArea.setBounds(12, 43, 410, 208);
-		contentPane.add(textArea);
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setBounds(12, 43, 410, 208);
+		this.getContentPane().add(scrollPane);
 	}
-	
-	// Å¬¶óÀÌ¾ğÆ®¿Í ½ÇÁúÀû Åë½ÅÀ» À§ÇÑ ½º·¹µå(ÀÚ½Ä ½º·¹µå)
+
+	// í´ë¼ì´ì–¸íŠ¸ì™€ ì‹¤ì§ˆì  í†µì‹ ì„ ìœ„í•œ ìŠ¤ë ˆë“œ(ìì‹ ìŠ¤ë ˆë“œ)
 	public class ChatThread extends Thread {
 		private Socket sock;
 		private String id;
@@ -135,120 +129,151 @@ public class chattingServer extends JFrame {
 		private HashMap hm;
 		private boolean initFlag = false;
 
-		// »ı¼ºÀÚ(Socket °´Ã¼¿Í HashMap °´Ã¼¸¦ Àü´Ş ¹ŞÀ½)
-		public ChatThread() {
-			
-		}
 		public ChatThread(Socket sock, HashMap hm) {
 			this.sock = sock;
 			this.hm = hm;
 			try {
-				// Å¬¶óÀÌ¾ğÆ®¿¡ write¸¦ À§ÇÑ ½ºÆ®¸²°´Ã¼ »ı¼º
+				// í´ë¼ì´ì–¸íŠ¸ì— writeë¥¼ ìœ„í•œ ìŠ¤íŠ¸ë¦¼ê°ì²´ ìƒì„±
 				PrintWriter pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
 
-				// Å¬¶óÀÌ¾ğÆ® ¸Ş½ÃÁö¸¦ read ÇÏ±â À§ÇÑ ½ºÆ®¸²°´Ã¼ »ı¼º
-				br = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-				
-				// Å¬¶óÀÌ¾ğÆ®°¡ ÀÔ·ÂÇÑ id °ª read
-				id = br.readLine();
-				// read ÇÑ id °ªÀ» ´Ù¸¥ ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ ºê·ÎµåÄ³½ºÆ®
-				broadcast(id + "´ÔÀÌ Á¢¼ÓÇß½À´Ï´Ù.");
+				// í´ë¼ì´ì–¸íŠ¸ ë©”ì‹œì§€ë¥¼ read í•˜ê¸° ìœ„í•œ ìŠ¤íŠ¸ë¦¼ê°ì²´ ìƒì„±
+				br = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
 
-				// ¼­¹öÈ­¸é¿¡ ¹æ±İ Á¢¼ÓÇÑ Å¬¶óÀÌ¾ğÆ® id Ç¥½Ã
-				System.out.println("Á¢¼ÓÇÑ »ç¿ëÀÚ ¾ÆÀÌµğ : " + id);
-				textArea.append("Á¢¼ÓÇÑ »ç¿ëÀÚ ¾ÆÀÌµğ : " + id + "\n");
-				
-				// HashMap¿¡ id¸¦ key ·Î, OutputStream °´Ã¼(PrintWriter)¸¦ value·Î ÇÏ¿© ÀúÀå
-				// (1) HashMap¿¡ Å¬¶óÀÌ¾ğÆ®ÀÇ PrintWriter °´Ã¼¸¦ ÀúÀåÇÏ´Â ÀÌÀ¯ :
-				// BufferedReader·Î ¼­¹ö°¡ ÀĞÀº ¹®ÀÚ¿­À» HashMap¿¡ ÀúÀåµÈ ¸ğµç
-				// PrintWriter¸¦ ÀÌ¿ëÇÏ¿© write ÇÏ±â À§ÇÔ.
-				// (2) synchronized ½ÃÅ°´Â ÀÌÀ¯ :
-				// ¿©·¯ ½º·¹µå°¡ HashMapÀ» °øÀ¯ÇÏ¹Ç·Î HashMap¿¡ ÀÖ´Â ÀÚ·á¸¦
-				// µ¿½Ã¿¡ Á¢±ÙÇÏ°Ô ÇÏ±â À§ÇÔ.
+				// í´ë¼ì´ì–¸íŠ¸ê°€ ì…ë ¥í•œ id ê°’ read
+				id = br.readLine();
+				// read í•œ id ê°’ì„ ë‹¤ë¥¸ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë¸Œë¡œë“œìºìŠ¤íŠ¸
+				broadcast(id + "ë‹˜ì´ ì ‘ì†í–ˆìŠµë‹ˆë‹¤.");
+
+				// ì„œë²„í™”ë©´ì— ë°©ê¸ˆ ì ‘ì†í•œ í´ë¼ì´ì–¸íŠ¸ id í‘œì‹œ
+				System.out.println("ì ‘ì†í•œ ì‚¬ìš©ì ì•„ì´ë”” : " + id);
+				textArea.append("ì ‘ì†í•œ ì‚¬ìš©ì ì•„ì´ë”” : " + id + "\n");
+				textArea.setCaretPosition(textArea.getDocument().getLength());
+
+				// HashMapì— idë¥¼ key ë¡œ, OutputStream ê°ì²´(PrintWriter)ë¥¼ valueë¡œ í•˜ì—¬
+				// ì €ì¥
+				// (1) HashMapì— í´ë¼ì´ì–¸íŠ¸ì˜ PrintWriter ê°ì²´ë¥¼ ì €ì¥í•˜ëŠ” ì´ìœ  :
+				// BufferedReaderë¡œ ì„œë²„ê°€ ì½ì€ ë¬¸ìì—´ì„ HashMapì— ì €ì¥ëœ ëª¨ë“ 
+				// PrintWriterë¥¼ ì´ìš©í•˜ì—¬ write í•˜ê¸° ìœ„í•¨.
+				// (2) synchronized ì‹œí‚¤ëŠ” ì´ìœ  :
+				// ì—¬ëŸ¬ ìŠ¤ë ˆë“œê°€ HashMapì„ ê³µìœ í•˜ë¯€ë¡œ HashMapì— ìˆëŠ” ìë£Œë¥¼
+				// ë™ì‹œì— ì ‘ê·¼í•˜ê²Œ í•˜ê¸° ìœ„í•¨.
 				synchronized (hm) {
 					hm.put(this.id, pw);
 				}
-
-				initFlag = true; // ÃÊ±âÈ­ ¿Ï¼º
+				initFlag = true; // ì´ˆê¸°í™” ì™„ì„±
 			} catch (Exception e) {
 				System.out.println(e);
 			}
 		}
-
-		// ÀÚ½Ä ½º·¹µå ½ÇÇà ÇÔ¼ö Á¤ÀÇ
+		
+		public void textappend(String str){
+			textArea.append(str);
+			textArea.setCaretPosition(textArea.getDocument().getLength());
+		}
+		
+		// ìì‹ ìŠ¤ë ˆë“œ ì‹¤í–‰ í•¨ìˆ˜ ì •ì˜
 		public void run() {
-			try {
-				String line = null;
+				try {
+					String line = null;
 
-				// Å¬¶óÀÌ¾ğÆ®°¡ º¸³»´Â ¸Ş½ÃÁö¸¦ ÇÑ ¶óÀÎ¾¿ ÀĞ¾î broadcast ÇÔ¼ö¿¡ ÀÇÇØ
-				// ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ Àü¼Û
-				while ((line = br.readLine()) != null && socketflag) {
-					// ¸¸¾à /quit ÀÌ¸é while ¹® ºüÁ®³ª¿È
-					if (line.equals("/quit"))
-						break;
+					while ((line = br.readLine()) != null && socketflag) {
+						// ë§Œì•½ /quit ì´ë©´ while ë¬¸ ë¹ ì ¸ë‚˜ì˜´
+						if (line.equals("/quit"))
+							break;
+/*
+						switch(line){
+						case "cmd1":
+							textappend(sock.getInetAddress()+" : "+id+ "\n");
+							broadcast("Action1 executed by" + "<"+id+">");
+							break;
+						case "cmd2":
+							textappend(sock.getInetAddress()+" : "+id+ "\n");
+							broadcast("Action2 executed by" + "<"+id+">");
+							break;
+						case "cmd3":
+							textappend(sock.getInetAddress()+" : "+id+ "\n");
+							broadcast("Action3 executed by" + "<"+id+">");
+							break;
+						case "SW1":
+							textappend(sock.getInetAddress()+" : "+id+ "\n");
+							broadcast("Action3 executed by" + "<"+id+">");
+							break;
+						case "SW2":
+							textappend(sock.getInetAddress()+" : "+id+ "\n");
+							broadcast("Action3 executed by" + "<"+id+">");
+							break;
+						case "SW3":
+							textappend(sock.getInetAddress()+" : "+id+ "\n");
+							broadcast("Action3 executed by" + "<"+id+">");
+							break;
+						default :
+							textappend("Connamd is not valid"+ "\n");
+							break;
+						}*/
+						// ë§Œì•½ /to ì´ë©´ íŠ¹ì • idì˜ í´ë¼ì´ì–¸íŠ¸ì—ê²Œë§Œ ì „ì†¡ë¨
+						
+						if (line.indexOf("/to ") == 0) {
+							sendmsg(line);
+						} else {
+							broadcast(id + " : " + line);
+							textappend(id + " : " + line + "\n");
+						}
+					}
+				} catch (Exception e) {
+					System.out.println(e);
 
-					// ¸¸¾à /to ÀÌ¸é Æ¯Á¤ idÀÇ Å¬¶óÀÌ¾ğÆ®¿¡°Ô¸¸ Àü¼ÛµÊ
-					if (line.indexOf("/to ") == 0) {
-						sendmsg(line);
-					} else {
-						broadcast(id + " : " + line);
-						textArea.append(id + " : " + line+ "\n");
+					// í´ë¼ì´ì–¸íŠ¸ê°€ /quitì— ì˜í•´ ì¢…ë£Œí•˜ì˜€ê±°ë‚˜, ê°•ì œ ì¢…ë£Œí•˜ì˜€ë‹¤ë©´ finally êµ¬ë¬¸ ì‹¤í–‰
+					// HashMapì— í˜„ì¬ ìŠ¤ë ˆë“œì˜ idì— í•´ë‹¹í•˜ëŠ” ì •ë³´ ì‚­ì œ í›„ ì ‘ì†ì¢…ë£Œ ë©”ì‹œì§€ë¥¼
+					// ë‚˜ë¨¸ì§€ í´ë¼ì´ì–¸íŠ¸ì— ë³´ë‚¸ë‹¤.
+					// ê·¸ë¦¬ê³  socket ë‹«ëŠ”ë‹¤.
+				} finally {
+					synchronized (hm) {
+						hm.remove(id);
+					}
+					broadcast(id + " ë‹˜ì´ ì ‘ì† ì¢…ë£Œí•˜ì˜€ìŠµë‹ˆë‹¤.");
+					textappend(id + " ë‹˜ì´ ì ‘ì† ì¢…ë£Œí•˜ì˜€ìŠµë‹ˆë‹¤.\n");
+					try {
+						if (sock != null)
+							sock.close();
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
-			} catch (Exception e) {
-				System.out.println(e);
-
-				// Å¬¶óÀÌ¾ğÆ®°¡ /quit¿¡ ÀÇÇØ Á¾·áÇÏ¿´°Å³ª, °­Á¦ Á¾·áÇÏ¿´´Ù¸é finally ±¸¹® ½ÇÇà
-				// HashMap¿¡ ÇöÀç ½º·¹µåÀÇ id¿¡ ÇØ´çÇÏ´Â Á¤º¸ »èÁ¦ ÈÄ Á¢¼ÓÁ¾·á ¸Ş½ÃÁö¸¦
-				// ³ª¸ÓÁö Å¬¶óÀÌ¾ğÆ®¿¡ º¸³½´Ù.
-				// ±×¸®°í socket ´İ´Â´Ù.
-			} finally {
-				synchronized (hm) {
-					hm.remove(id);
-				}
-				broadcast(id + " ´ÔÀÌ Á¢¼Ó Á¾·áÇÏ¿´½À´Ï´Ù.");
-				textArea.append(id + " ´ÔÀÌ Á¢¼Ó Á¾·áÇÏ¿´½À´Ï´Ù.\n");
-				try {
-					if (sock != null)
-						sock.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
 		}
 
-		// Æ¯Á¤ ¾ÆÀÌµğ¿¡°Ô ¹®ÀÚ¿­ Àü¼ÛÀ» À§ÇÑ ÇÔ¼ö
-		// Çü½Ä "/to id Àü´Ş_¸Ş½ÃÁö"
+		// íŠ¹ì • ì•„ì´ë””ì—ê²Œ ë¬¸ìì—´ ì „ì†¡ì„ ìœ„í•œ í•¨ìˆ˜
+		// í˜•ì‹ "/to id ì „ë‹¬_ë©”ì‹œì§€"
 		public void sendmsg(String msg) {
-			// ¹®ÀÚ¿­ Áß Ã³À½ °ø¹éº¸´Ù 1Å« °ªÀ» return
+			// ë¬¸ìì—´ ì¤‘ ì²˜ìŒ ê³µë°±ë³´ë‹¤ 1í° ê°’ì„ return
 			int start = msg.indexOf(" ") + 1;
 
-			// start¹øÂ° index¿¡¼­ ½ÃÀÛÇÏ¿© Ã³À½ °ø¹éÀÇ index°ª return
+			// startë²ˆì§¸ indexì—ì„œ ì‹œì‘í•˜ì—¬ ì²˜ìŒ ê³µë°±ì˜ indexê°’ return
 			int end = msg.indexOf(" ", start);
 			if (end != -1) {
-				// start~end ÀÎµ¦½ºÀÇ ¹®ÀÚ¿­ °¡Á®¿È(id °¡Á®¿È)
+				// start~end ì¸ë±ìŠ¤ì˜ ë¬¸ìì—´ ê°€ì ¸ì˜´(id ê°€ì ¸ì˜´)
 				String to = msg.substring(start, end);
-				String msg2 = msg.substring(end + 1); // Àü´ŞÇÒ ¸Ş½ÃÁö °¡Á®¿È
-				Object obj = hm.get(to); // HashMap¿¡¼­ ÇØ´ç idÀÇ °´Ã¼ °ª °¡Á®¿È
+				String msg2 = msg.substring(end + 1); // ì „ë‹¬í•  ë©”ì‹œì§€ ê°€ì ¸ì˜´
+				Object obj = hm.get(to); // HashMapì—ì„œ í•´ë‹¹ idì˜ ê°ì²´ ê°’ ê°€ì ¸ì˜´
 				if (obj != null) {
 					PrintWriter pw = (PrintWriter) obj;
-					pw.println(id + " ´ÔÀÌ ±Ó¼Ó¸»À» º¸³»¼Ë½À´Ï´Ù. : " + msg2);
-					textArea.append(id + " ´ÔÀÌ "+ obj +"¿¡°Ô ±Ó¼Ó¸»À» º¸³»¼Ë½À´Ï´Ù. : " + msg2+"\n");
+					pw.println(id + " ë‹˜ì´ ê·“ì†ë§ì„ ë³´ë‚´ì…§ìŠµë‹ˆë‹¤. : " + msg2);
+					textArea.append(id + " ë‹˜ì´ " + obj + "ì—ê²Œ ê·“ì†ë§ì„ ë³´ë‚´ì…§ìŠµë‹ˆë‹¤. : " + msg2 + "\n");
+					textArea.setCaretPosition(textArea.getDocument().getLength()); 
 					pw.flush();
 				}
 			}
 		}
 
-		// ºê·Îµå Ä³½ºÆ® ¸Ş¼Òµå : Á¢¼ÓÇÑ ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡°Ô ¹®ÀÚ¿­À» Àü¼ÛÇÏ´Â ¸Ş¼Òµå
-		// Àü¼ÛÇÒ ¹®ÀÚ¿­À» ÀÎÀÚ·Î Àü´Ş¹Ş´Â´Ù.
+		// ë¸Œë¡œë“œ ìºìŠ¤íŠ¸ ë©”ì†Œë“œ : ì ‘ì†í•œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ë¬¸ìì—´ì„ ì „ì†¡í•˜ëŠ” ë©”ì†Œë“œ
+		// ì „ì†¡í•  ë¬¸ìì—´ì„ ì¸ìë¡œ ì „ë‹¬ë°›ëŠ”ë‹¤.
 		public void broadcast(String msg) {
 			synchronized (hm) {
-				// HashMap¿¡ ÀúÀåµÈ °¢°¢ÀÇ Å¬¶óÀÌ¾ğÆ®ÀÇ pw °´Ã¼¸¦ °´Ã¼ ¹è¿­(Collection)¿¡
-				// °¡Á®¿Â´Ù. value()´Â HashMap¿¡ Æ÷ÇÔµÈ °ªµéÀ» Collection °´Ã¼·Î return.
+				// HashMapì— ì €ì¥ëœ ê°ê°ì˜ í´ë¼ì´ì–¸íŠ¸ì˜ pw ê°ì²´ë¥¼ ê°ì²´ ë°°ì—´(Collection)ì—
+				// ê°€ì ¸ì˜¨ë‹¤. value()ëŠ” HashMapì— í¬í•¨ëœ ê°’ë“¤ì„ Collection ê°ì²´ë¡œ return.
 				Collection collection = hm.values();
 
-				// CollectionÀÇ ¿ä¼ÒµéÀ» ¹İº¹ÇÏ¿© °¡Áö°í ¿À±â À§ÇØ Iterator °´Ã¼ »ı¼ºÇÑ ÈÄ
-				// Iterator¸¦ ÅëÇÏ¿© ¸ğµç pw °´Ã¼¸¦ °¡Á®¿Í ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ ¸Ş½ÃÁö Àü¼Û
+				// Collectionì˜ ìš”ì†Œë“¤ì„ ë°˜ë³µí•˜ì—¬ ê°€ì§€ê³  ì˜¤ê¸° ìœ„í•´ Iterator ê°ì²´ ìƒì„±í•œ í›„
+				// Iteratorë¥¼ í†µí•˜ì—¬ ëª¨ë“  pw ê°ì²´ë¥¼ ê°€ì ¸ì™€ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë©”ì‹œì§€ ì „ì†¡
 				Iterator iter = collection.iterator();
 				while (iter.hasNext()) {
 					PrintWriter pw = (PrintWriter) iter.next();
@@ -260,4 +285,3 @@ public class chattingServer extends JFrame {
 	}
 
 }
-
