@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
 import javax.swing.AbstractAction;
@@ -22,6 +23,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.border.EmptyBorder;
+import javax.swing.DropMode;
 
 public class Chatting_client extends JFrame {
 
@@ -71,8 +73,7 @@ public class Chatting_client extends JFrame {
 					// 입력된 사용자 id를 서버로 전달
 					pw.println(id);
 					pw.flush();
-					textArea.append("접속 완료.. id : " + id + "\n");
-					textArea.setCaretPosition(textArea.getDocument().getLength());
+					textappend("접속 완료.. id : " + id );
 
 					// 자식스레드 시작
 					// 자식스레드는 서버가 전달하는 문자열을 읽어와 화면(표준 출력)에
@@ -87,8 +88,6 @@ public class Chatting_client extends JFrame {
 					while (connect) {
 						line = textField_msg.getText();
 						if (send && connect) {
-							textArea.append(id + " : " + line + "\n");
-							textArea.setCaretPosition(textArea.getDocument().getLength());
 							pw.println(line);
 							pw.flush();
 							textField_msg.setText("");
@@ -99,13 +98,12 @@ public class Chatting_client extends JFrame {
 							}
 						}
 					}
-					textArea.append("클라이언트 접속을 종료합니다.\n");
+					textappend("클라이언트 접속을 종료합니다.");
 
 				} catch (Exception e) {
 					if (!endflag) {
 						e.printStackTrace();
-						textArea.append("접속실패...\n");
-						textArea.setCaretPosition(textArea.getDocument().getLength());
+						textappend("접속실패...");
 					}
 				} finally {
 					try {
@@ -132,6 +130,11 @@ public class Chatting_client extends JFrame {
 		t1.start();
 	}
 
+	public void textappend(String str){
+		textArea.append(str+"\n");
+		textArea.setCaretPosition(textArea.getDocument().getLength());
+	}
+	
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -176,6 +179,7 @@ public class Chatting_client extends JFrame {
 		textField_port.setBounds(160, 41, 262, 21);
 		contentPane.add(textField_port);
 		textField_port.setColumns(10);
+		textArea.setEditable(false);
 
 		JScrollPane scrollPane = new JScrollPane(textArea);
 		scrollPane.setBounds(12, 103, 410, 190);
@@ -196,7 +200,7 @@ public class Chatting_client extends JFrame {
 		contentPane.add(btnSend);
 
 		textField_ip = new JTextField();
-		textField_ip.setText("192.168.162.92");
+		textField_ip.setText("192.168.162.91");
 		textField_ip.setBounds(160, 10, 262, 21);
 		contentPane.add(textField_ip);
 		textField_ip.setColumns(10);
@@ -247,10 +251,10 @@ public class Chatting_client extends JFrame {
 				String line = null;
 				while ((line = readFromServer.readLine()) != null) {
 					System.out.println(line);
+					textappend(line);
 				}
 			} catch (Exception e) {
-				textArea.append("소켓 종료 되었습니다.\n");
-				textArea.setCaretPosition(textArea.getDocument().getLength());
+				textappend("소켓 종료 되었습니다.");
 				connect = false;
 			} finally {
 				try {
@@ -266,6 +270,10 @@ public class Chatting_client extends JFrame {
 					e.printStackTrace();
 				}
 			}
+		}
+		public void textappend(String str){
+			textArea.append(str+"\n");
+			textArea.setCaretPosition(textArea.getDocument().getLength());
 		}
 	}
 }
