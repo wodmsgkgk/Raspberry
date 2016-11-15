@@ -115,6 +115,7 @@ public class chattingServer extends JFrame {
 		textField_port.setBounds(121, 11, 301, 21);
 		contentPane.add(textField_port);
 		textField_port.setColumns(10);
+		textArea.setEditable(false);
 
 		JScrollPane scrollPane = new JScrollPane(textArea);
 		scrollPane.setBounds(12, 43, 410, 208);
@@ -134,7 +135,7 @@ public class chattingServer extends JFrame {
 			this.hm = hm;
 			try {
 				// 클라이언트에 write를 위한 스트림객체 생성
-				PrintWriter pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream()));
+				PrintWriter pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream(), "UTF-8"));
 
 				// 클라이언트 메시지를 read 하기 위한 스트림객체 생성
 				br = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
@@ -180,7 +181,7 @@ public class chattingServer extends JFrame {
 						// 만약 /quit 이면 while 문 빠져나옴
 						if (line.equals("/quit"))
 							break;
-/*
+
 						switch(line){
 						case "cmd1":
 							textappend(sock.getInetAddress()+" : "+id+ "\n");
@@ -209,7 +210,7 @@ public class chattingServer extends JFrame {
 						default :
 							textappend("Connamd is not valid"+ "\n");
 							break;
-						}*/
+						}
 						// 만약 /to 이면 특정 id의 클라이언트에게만 전송됨
 						
 						if (line.indexOf("/to ") == 0) {
