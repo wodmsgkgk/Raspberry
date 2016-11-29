@@ -146,7 +146,6 @@ public class chattingServer extends JFrame {
 				broadcast(id + "님이 접속했습니다.");
 
 				// 서버화면에 방금 접속한 클라이언트 id 표시
-				System.out.println("접속한 사용자 아이디 : " + id);
 				textArea.append("접속한 사용자 아이디 : " + id + "\n");
 				textArea.setCaretPosition(textArea.getDocument().getLength());
 
@@ -182,34 +181,9 @@ public class chattingServer extends JFrame {
 						if (line.equals("/quit"))
 							break;
 
-						switch(line){
-						case "cmd1":
+						if(line.startsWith("cmd")){
 							textappend(sock.getInetAddress()+" : "+id+ "\n");
-							broadcast("Action1 executed by" + "<"+id+">");
-							break;
-						case "cmd2":
-							textappend(sock.getInetAddress()+" : "+id+ "\n");
-							broadcast("Action2 executed by" + "<"+id+">");
-							break;
-						case "cmd3":
-							textappend(sock.getInetAddress()+" : "+id+ "\n");
-							broadcast("Action3 executed by" + "<"+id+">");
-							break;
-						case "SW1":
-							textappend(sock.getInetAddress()+" : "+id+ "\n");
-							broadcast("Action3 executed by" + "<"+id+">");
-							break;
-						case "SW2":
-							textappend(sock.getInetAddress()+" : "+id+ "\n");
-							broadcast("Action3 executed by" + "<"+id+">");
-							break;
-						case "SW3":
-							textappend(sock.getInetAddress()+" : "+id+ "\n");
-							broadcast("Action3 executed by" + "<"+id+">");
-							break;
-						default :
-							textappend("Connamd is not valid"+ "\n");
-							break;
+							broadcast(line+sock.getInetAddress()+" : "+id);
 						}
 						// 만약 /to 이면 특정 id의 클라이언트에게만 전송됨
 						
