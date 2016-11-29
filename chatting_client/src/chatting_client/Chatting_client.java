@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
 import javax.swing.AbstractAction;
@@ -24,17 +23,33 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.border.EmptyBorder;
 import javax.swing.DropMode;
+import java.awt.Panel;
+import java.awt.Color;
+import java.awt.Button;
+import javax.swing.JTextPane;
 
-public class Chatting_client extends JFrame {
+public class Chatting_client extends JFrame implements ActionListener {
 
 	private JPanel contentPane;
 	private JTextField textField_port;
 	private JTextField textField_msg;
 	private JTextArea textArea = new JTextArea();
 	private JTextField textField_ip;
-	private JTextField txtWodms;
+	private JTextField text_ID;
 	private boolean send = false;
 	private boolean connect = false;
+	private JTextField textFieldSw_1;
+	private JTextField textFieldSw_2;
+	private JTextField textFieldSw_3;
+	private JTextField textFieldact_1;
+	private JTextField textFieldact_2;
+	private JTextField textFieldact_3;
+	private JButton btnClient;
+	private Button btn_act1;
+	private Button btn_act2;
+	private Button btn_act3;
+	private JButton btnSend;
+	private JButton btnClose;
 
 	/**
 	 * Launch the application.
@@ -45,13 +60,13 @@ public class Chatting_client extends JFrame {
 				connect = true;
 				Socket sock = null;
 
-				// í˜¸ìŠ¤íŠ¸ëª…, í¬íŠ¸ë²ˆí˜¸ ì…ë ¥ ë°›ê¸° ìœ„í•œ ê°ì²´
+				// È£½ºÆ®¸í, Æ÷Æ®¹øÈ£ ÀÔ·Â ¹Ş±â À§ÇÑ °´Ã¼
 				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-				// ì„œë²„ë¡œ ë¶€í„° ì½ì–´ì˜¤ê¸° ìœ„í•œ ì…ë ¥ ìŠ¤íŠ¸ë¦¼ ê°ì²´
+				// ¼­¹ö·Î ºÎÅÍ ÀĞ¾î¿À±â À§ÇÑ ÀÔ·Â ½ºÆ®¸² °´Ã¼
 				BufferedReader readFromServer = null;
 
-				// ì„œë²„ë¡œ ì „ë‹¬í•  ì¶œë ¥ ìŠ¤íŠ¸ë¦¼ ê°ì²´
+				// ¼­¹ö·Î Àü´ŞÇÒ Ãâ·Â ½ºÆ®¸² °´Ã¼
 				PrintWriter pw = null;
 
 				boolean endflag = false;
@@ -60,52 +75,63 @@ public class Chatting_client extends JFrame {
 					String host = textField_ip.getText();
 					int port = Integer.parseInt(textField_port.getText());
 
-					// ì†Œì¼“ ê°ì²´ ìƒì„±(socket open)
+					// ¼ÒÄÏ °´Ã¼ »ı¼º(socket open)
 					sock = new Socket(host, port);
 
-					// ìŠ¤íŠ¸ë¦¼ ê°ì²´ ìƒì„±
+					// ½ºÆ®¸² °´Ã¼ »ı¼º
 					pw = new PrintWriter(new OutputStreamWriter(sock.getOutputStream(), "UTF-8"));
 					readFromServer = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
 
-					// ì‚¬ìš©ì id ì…ë ¥
-					String id = txtWodms.getText();
+					// »ç¿ëÀÚ id ÀÔ·Â
+					String id = text_ID.getText();
 
-					// ì…ë ¥ëœ ì‚¬ìš©ì idë¥¼ ì„œë²„ë¡œ ì „ë‹¬
+					// ÀÔ·ÂµÈ »ç¿ëÀÚ id¸¦ ¼­¹ö·Î Àü´Ş
 					pw.println(id);
 					pw.flush();
-					textappend("ì ‘ì† ì™„ë£Œ.. id : " + id );
+					textappend("Á¢¼Ó ¿Ï·á.. id : " + id);
 
-					// ìì‹ìŠ¤ë ˆë“œ ì‹œì‘
-					// ìì‹ìŠ¤ë ˆë“œëŠ” ì„œë²„ê°€ ì „ë‹¬í•˜ëŠ” ë¬¸ìì—´ì„ ì½ì–´ì™€ í™”ë©´(í‘œì¤€ ì¶œë ¥)ì—
-					// ì¶œë ¥ì‹œí‚¤ëŠ” ì—­í• ì„ í•œë‹¤.
+					btn_act1.setEnabled(true);
+					btn_act2.setEnabled(true);
+					btn_act3.setEnabled(true);
+					// ÀÚ½Ä½º·¹µå ½ÃÀÛ
+					// ÀÚ½Ä½º·¹µå´Â ¼­¹ö°¡ Àü´ŞÇÏ´Â ¹®ÀÚ¿­À» ÀĞ¾î¿Í È­¸é(Ç¥ÁØ Ãâ·Â)¿¡
+					// Ãâ·Â½ÃÅ°´Â ¿ªÇÒÀ» ÇÑ´Ù.
 					ReadFromServerThread thread = new ReadFromServerThread(sock, readFromServer);
 					thread.start();
 
-					// ë©”ì¸ìŠ¤ë ˆë“œ
-					// ë©”ì¸ìŠ¤ë ˆë“œëŠ” ì „ë‹¬í•  ë©”ì‹œì§€ë¥¼ í‚¤ë³´ë“œ(í‘œì¤€ì…ë ¥)ë¡œ ì…ë ¥ë°›ì•„ ì„œë²„ë¡œ ì¶œë ¥
-					// ì‹œí‚¤ëŠ” ì—­í• 
+					// ¸ŞÀÎ½º·¹µå
+					// ¸ŞÀÎ½º·¹µå´Â Àü´ŞÇÒ ¸Ş½ÃÁö¸¦ Å°º¸µå(Ç¥ÁØÀÔ·Â)·Î ÀÔ·Â¹Ş¾Æ ¼­¹ö·Î Ãâ·Â
+					// ½ÃÅ°´Â ¿ªÇÒ
 					String line = null;
 					while (connect) {
 						line = textField_msg.getText();
-						if (send && connect) {
-							pw.println(line);
-							pw.flush();
-							textField_msg.setText("");
-							send = false;
-							if (line.equals("/quit")) {
-								endflag = true;
-								break;
+						if (send) {
+							if (!line.equals("")) {
+								pw.println(line);
+								pw.flush();
+								textField_msg.setText("");
+								send = false;
+								if (line.equals("/quit")) {
+									endflag = true;
+									btn_act1.setEnabled(false);
+									btn_act2.setEnabled(false);
+									btn_act3.setEnabled(false);
+									break;
+								}
+							}else{
+								line = null;
 							}
 						}
 					}
-					textappend("í´ë¼ì´ì–¸íŠ¸ ì ‘ì†ì„ ì¢…ë£Œí•©ë‹ˆë‹¤.");
+					textappend("Å¬¶óÀÌ¾ğÆ® Á¢¼ÓÀ» Á¾·áÇÕ´Ï´Ù.");
 
 				} catch (Exception e) {
 					if (!endflag) {
 						e.printStackTrace();
-						textappend("ì ‘ì†ì‹¤íŒ¨...");
+						textappend("Á¢¼Ó½ÇÆĞ...");
 					}
 				} finally {
+					connect = false;
 					try {
 						if (pw != null)
 							pw.close();
@@ -129,12 +155,15 @@ public class Chatting_client extends JFrame {
 		});
 		t1.start();
 	}
+	public void FromServerListener(String str){
+		
+	}
 
-	public void textappend(String str){
-		textArea.append(str+"\n");
+	public void textappend(String str) {
+		textArea.append(str + "\n");
 		textArea.setCaretPosition(textArea.getDocument().getLength());
 	}
-	
+
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -153,27 +182,47 @@ public class Chatting_client extends JFrame {
 	 */
 	public Chatting_client() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 379);
+		setBounds(100, 100, 687, 379);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
-		JButton btnClient = new JButton("\uC11C\uBC84\uC811\uC18D");
-		btnClient.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				if (!connect) {
-					try {
-						server_client();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		});
-		btnClient.setBounds(12, 29, 97, 46);
+		// ¹öÆ° °´Ã¼
+		btnClient = new JButton("\uC11C\uBC84 \uC811\uC18D");
+		btnClient.addActionListener(this);
+		btnClient.setBounds(12, 14, 97, 32);
 		contentPane.add(btnClient);
 
+		btnSend = new JButton("\uC804\uC1A1");
+		btnSend.addActionListener(this);
+		btnSend.setBounds(333, 307, 97, 23);
+		contentPane.add(btnSend);
+
+		btnClose = new JButton("\uC811\uC18D \uC885\uB8CC");
+		btnClose.addActionListener(this);
+		btnClose.setBounds(12, 61, 97, 32);
+		contentPane.add(btnClose);
+
+		btn_act1 = new Button("Action1");
+		btn_act1.setEnabled(false);
+		btn_act1.addActionListener(this);
+		btn_act1.setBounds(442, 8, 217, 23);
+		contentPane.add(btn_act1);
+
+		btn_act2 = new Button("Action2");
+		btn_act2.setEnabled(false);
+		btn_act2.addActionListener(this);
+		btn_act2.setBounds(442, 70, 217, 23);
+		contentPane.add(btn_act2);
+
+		btn_act3 = new Button("Action3");
+		btn_act3.setEnabled(false);
+		btn_act3.addActionListener(this);
+		btn_act3.setBounds(442, 139, 217, 23);
+		contentPane.add(btn_act3);
+
+		// ÅØ½ºÆ® ÇÊµå
 		textField_port = new JTextField();
 		textField_port.setText("7000");
 		textField_port.setBounds(160, 41, 262, 21);
@@ -181,30 +230,65 @@ public class Chatting_client extends JFrame {
 		textField_port.setColumns(10);
 		textArea.setEditable(false);
 
-		JScrollPane scrollPane = new JScrollPane(textArea);
-		scrollPane.setBounds(12, 103, 410, 190);
-		this.getContentPane().add(scrollPane);
-
 		textField_msg = new JTextField();
 		textField_msg.setBounds(12, 308, 309, 21);
 		contentPane.add(textField_msg);
 		textField_msg.setColumns(10);
 
-		JButton btnSend = new JButton("\uC804\uC1A1");
-		btnSend.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				send = true;
-			}
-		});
-		btnSend.setBounds(333, 307, 97, 23);
-		contentPane.add(btnSend);
-
 		textField_ip = new JTextField();
-		textField_ip.setText("192.168.162.91");
+		textField_ip.setText("192.168.162.92");
 		textField_ip.setBounds(160, 10, 262, 21);
 		contentPane.add(textField_ip);
 		textField_ip.setColumns(10);
 
+		text_ID = new JTextField();
+		text_ID.setText("wodms");
+		text_ID.setBounds(160, 72, 262, 21);
+		contentPane.add(text_ID);
+		text_ID.setColumns(10);
+
+		textFieldSw_1 = new JTextField();
+		textFieldSw_1.setEditable(false);
+		textFieldSw_1.setBounds(434, 226, 49, 21);
+		contentPane.add(textFieldSw_1);
+		textFieldSw_1.setColumns(10);
+
+		textFieldSw_2 = new JTextField();
+		textFieldSw_2.setEditable(false);
+		textFieldSw_2.setBounds(503, 226, 49, 21);
+		contentPane.add(textFieldSw_2);
+		textFieldSw_2.setColumns(10);
+
+		textFieldSw_3 = new JTextField();
+		textFieldSw_3.setEditable(false);
+		textFieldSw_3.setColumns(10);
+		textFieldSw_3.setBounds(575, 226, 49, 21);
+		contentPane.add(textFieldSw_3);
+
+		textFieldact_1 = new JTextField();
+		textFieldact_1.setEditable(false);
+		textFieldact_1.setColumns(10);
+		textFieldact_1.setBounds(441, 41, 218, 21);
+		contentPane.add(textFieldact_1);
+
+		textFieldact_2 = new JTextField();
+		textFieldact_2.setEditable(false);
+		textFieldact_2.setColumns(10);
+		textFieldact_2.setBounds(441, 105, 218, 21);
+		contentPane.add(textFieldact_2);
+
+		textFieldact_3 = new JTextField();
+		textFieldact_3.setEditable(false);
+		textFieldact_3.setColumns(10);
+		textFieldact_3.setBounds(441, 168, 218, 21);
+		contentPane.add(textFieldact_3);
+
+		// ½ºÅ©·Ñ
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setBounds(12, 103, 410, 190);
+		this.getContentPane().add(scrollPane);
+
+		// ¶óº§
 		JLabel lblNewLabel = new JLabel("I      P");
 		lblNewLabel.setBounds(121, 14, 40, 15);
 		contentPane.add(lblNewLabel);
@@ -213,20 +297,29 @@ public class Chatting_client extends JFrame {
 		lblNewLabel_1.setBounds(121, 42, 40, 15);
 		contentPane.add(lblNewLabel_1);
 
-		txtWodms = new JTextField();
-		txtWodms.setText("wodms");
-		txtWodms.setBounds(160, 72, 262, 21);
-		contentPane.add(txtWodms);
-		txtWodms.setColumns(10);
-
 		JLabel lblId = new JLabel("I      D");
 		lblId.setBounds(121, 75, 57, 15);
 		contentPane.add(lblId);
 
+		JLabel lblNewLabel_2 = new JLabel("SW1");
+		lblNewLabel_2.setBounds(442, 201, 57, 15);
+		contentPane.add(lblNewLabel_2);
+
+		JLabel lblSw = new JLabel("SW2");
+		lblSw.setBounds(511, 201, 57, 15);
+		contentPane.add(lblSw);
+
+		JLabel lblSw_1 = new JLabel("SW3");
+		lblSw_1.setBounds(583, 201, 57, 15);
+		contentPane.add(lblSw_1);
+
+		// Å° ÀÌº¥Æ®
 		Action ok = new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				send = true;
+				if(textField_msg.getText() != ""){
+					send = true;
+				}
 			}
 		};
 		KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
@@ -234,13 +327,42 @@ public class Chatting_client extends JFrame {
 		textField_msg.getActionMap().put("ENTER", ok);
 	}
 
-	// ìì‹ ìŠ¤ë ˆë“œ í´ë˜ìŠ¤
-	// ì„œë²„ê°€ ì „ë‹¬í•˜ëŠ” ë¬¸ìì—´ì„ ì½ì–´ì™€ í™”ë©´(í‘œì¤€ ì¶œë ¥)ì— ì¶œë ¥ì‹œí‚¤ëŠ” ì—­í• ì„ í•œë‹¤.
+	// ÀÌº¥Æ® Ã³¸®
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		if (arg0.getSource().equals(btnClient)) {
+			try {
+				server_client();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		} else if (arg0.getSource().equals(btnSend)) {
+		} else if (arg0.getSource().equals(btnClose)) {
+			textField_msg.setText("/quit");
+		} else if (arg0.getSource().equals(btn_act1)) {
+			textField_msg.setText("cmd1");
+			textFieldact_1.setText("Action1 On");
+		} else if (arg0.getSource().equals(btn_act2)) {
+			textField_msg.setText("cmd2");
+			textFieldact_2.setText("Action2 On");
+		} else if (arg0.getSource().equals(btn_act3)) {
+			textField_msg.setText("cmd3");
+			textFieldact_3.setText("Action3 On");
+		}
+		if(connect && textField_msg.getText() != ""){
+			send = true;
+		}else{
+			textField_msg.setText("");
+		}
+	}
+
+	// ÀÚ½Ä ½º·¹µå Å¬·¡½º
+	// ¼­¹ö°¡ Àü´ŞÇÏ´Â ¹®ÀÚ¿­À» ÀĞ¾î¿Í È­¸é(Ç¥ÁØ Ãâ·Â)¿¡ Ãâ·Â½ÃÅ°´Â ¿ªÇÒÀ» ÇÑ´Ù.
 	class ReadFromServerThread extends Thread {
 		private Socket sock = null;
 		private BufferedReader readFromServer = null;
 
-		// ìƒì„±ì
+		// »ı¼ºÀÚ
 		public ReadFromServerThread(Socket sock, BufferedReader readFromServer) {
 			this.sock = sock;
 			this.readFromServer = readFromServer;
@@ -250,11 +372,10 @@ public class Chatting_client extends JFrame {
 			try {
 				String line = null;
 				while ((line = readFromServer.readLine()) != null) {
-					System.out.println(line);
-					textappend(line);
+					FromServerListener(line);
 				}
 			} catch (Exception e) {
-				textappend("ì†Œì¼“ ì¢…ë£Œ ë˜ì—ˆìŠµë‹ˆë‹¤.");
+				textappend("¼ÒÄÏ Á¾·á µÇ¾ú½À´Ï´Ù.");
 				connect = false;
 			} finally {
 				try {
@@ -271,8 +392,28 @@ public class Chatting_client extends JFrame {
 				}
 			}
 		}
-		public void textappend(String str){
-			textArea.append(str+"\n");
+		private void FromServerListener(String line) {
+			int index;
+			if(line.startsWith("SW")){
+				index = Integer.parseInt(line.substring(2,3));
+				switch(index){
+				case 1:
+					textFieldSw_1.setText(line.substring(3));
+					break;
+				case 2:
+					textFieldSw_2.setText(line.substring(3));
+					break;
+				case 3:
+					textFieldSw_3.setText(line.substring(3));
+					break;
+				}
+			}else{
+				textappend(line);
+			}
+			
+		}
+		public void textappend(String str) {
+			textArea.append(str + "\n");
 			textArea.setCaretPosition(textArea.getDocument().getLength());
 		}
 	}
